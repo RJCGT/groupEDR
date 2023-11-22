@@ -18,6 +18,7 @@
 #include <nsapi_dns.h>
 #include <MQTTClientMbedOs.h>
 #include "bme280.h"
+#include "keys.h"
 
 using namespace sixtron;
 
@@ -31,7 +32,7 @@ namespace
 #define MQTT_TOPIC_SUBSCRIBE_BTN "RGJCT/feeds/groupedr.pressbtn"
 #define MQTT_TOPIC_SUBSCRIBE_VIT "RGJCT/feeds/groupedr.vitled"
 #define SYNC_INTERVAL 1
-#define MQTT_CLIENT_ID "aio_lAfI78cgx5Fh0fBml6XGPsYUpuEa"
+#define MQTT_CLIENT_ID "aio_PWjf96mm"
 }
 
 // Peripherals
@@ -114,8 +115,9 @@ static void yield()
 static int8_t pressure()
 {
     float pres = bme.pressure();
-    printf("Pressure : %.2f Pa \n",pres);
-    char *presPayload = "101542.00";
+    char presPayload[20];
+    snprintf(presPayload,19,"%.2f",pres);
+    
     
     MQTT::Message messagepres;
     messagepres.qos = MQTT::QOS1;
@@ -138,13 +140,13 @@ static int8_t pressure()
 static int8_t temphum()
 {
     float temp = bme.temperature();
-    printf("Temperature : %.2f °C \n",temp);
+    char tempPayload[20];
+    snprintf(tempPayload,19,"%.2f",temp);
     float hum = bme.humidity();
-    printf("Humidity : %.2f % \n", hum);
+    char humPayload[20];
+    snprintf(humPayload,19,"%.2f", hum);
 
-    char *tempPayload = "10.43";
-
-    char *humPayload = "40.32";
+    
     
     MQTT::Message messagetemp;
     messagetemp.qos = MQTT::QOS1;
@@ -237,9 +239,9 @@ int main()
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = 4;
     data.keepAliveInterval = 25;
-    data.clientID.cstring = "6TRON";
-    data.username.cstring = (char *)"RGJCT";
-    data.password.cstring = (char *)"aio_lAfI78cgx5Fh0fBml6XGPsYUpuEa";
+    data.clientID.cstring = "qE1A3tUd5n";
+    data.username.cstring = USERNAME;
+    data.password.cstring = PASSWORD;
     if (client->connect(data) != 0)
     {
         printf("Connection to Adafruit Failed\n");
