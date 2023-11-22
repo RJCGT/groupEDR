@@ -20,6 +20,7 @@
 #include "bme280.h"
 #include "keys.h"
 #include "stdlib.h"
+#include "Kernel.h"
 
 using namespace sixtron;
 
@@ -59,6 +60,7 @@ static EventQueue main_queue(32 * EVENTS_EVENT_SIZE);
 
 //Variable
 Ticker voyant;
+uint64_t last_message = Kernel::get_ms_count();
 
 void clignote(){
     led =!led;
@@ -90,6 +92,10 @@ static void yield()
  */
 static int8_t pression()
 {
+    if ((Kernel::get_ms_count()-last_message)<1000)
+    {
+        ThisThread::sleep_for(1s);
+    }
     float pres = bme.pressure();
     char presPayload[20];
     snprintf(presPayload,19,"%.2f",pres);
@@ -109,12 +115,16 @@ static int8_t pression()
         printf("Failed to publish: %d\n", rc);
         return rc;
     }
-
+    last_message = Kernel::get_ms_count();
     return 0;
 }
 
 static int8_t temphum()
 {
+    if ((Kernel::get_ms_count()-last_message)<1000)
+    {
+        ThisThread::sleep_for(1s);
+    }
     float temp = bme.temperature();
     char tempPayload[20];
     snprintf(tempPayload,19,"%.2f",temp);
@@ -145,7 +155,7 @@ static int8_t temphum()
         printf("Failed to publish: %d\n", rc);
         return rc;
     }
-    ThisThread::sleep_for(500ms);
+    ThisThread::sleep_for(1s);
     printf("Send: %s to MQTT Broker: %s\n", humPayload, hostname);
     rc = client->publish(MQTT_TOPIC_PUBLISH_HUM, messagehum);
     if (rc != 0)
@@ -153,7 +163,7 @@ static int8_t temphum()
         printf("Failed to publish: %d\n", rc);
         return rc;
     }
-
+    last_message = Kernel::get_ms_count();
     return 0;
 }
 
