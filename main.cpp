@@ -190,8 +190,8 @@ int main()
     data.MQTTVersion = 4;
     data.keepAliveInterval = 25;
     data.clientID.cstring = "6TRON";
-    data.username.cstring = (char*) “adafruit_username”; // Adafruit username
-    data.password.cstring = (char*) “adafruit_io_key”; // Adafruit user key
+    data.username.cstring = (char*) “RGJCT”; // Adafruit username
+    data.password.cstring = (char*) “aio_EXZX901ftQKQWWvvVVlsID9zs6WH”; // Adafruit user key
 
     printf("Connected to Adafruit\n");
 
