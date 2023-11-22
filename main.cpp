@@ -19,6 +19,7 @@
 #include <MQTTClientMbedOs.h>
 #include "bme280.h"
 #include "keys.h"
+#include "stdlib.h"
 
 using namespace sixtron;
 
@@ -56,36 +57,11 @@ nsapi_size_or_error_t rc = 0;
 static int id_yield;
 static EventQueue main_queue(32 * EVENTS_EVENT_SIZE);
 
-/*!
- *  \brief Called when a message is received
- *
- *  Print messages received on mqtt topic
- */
-void messageArrived(MQTT::MessageData &md)
-{
-    MQTT::Message &message = md.message;
-    printf("Message arrived: qos %d, retained %d, dup %d, packetid %d\r\n", message.qos, message.retained, message.dup, message.id);
-    printf("Payload %.*s\r\n", message.payloadlen, (char *)message.payload);
+//Variable
+Ticker voyant;
 
-    // Get the payload string
-    char *char_payload = (char *)malloc((message.payloadlen + 1) * sizeof(char)); // allocate the necessary size for our buffer
-    char_payload = (char *)message.payload;                                       // get the arrived payload in our buffer
-    char_payload[message.payloadlen] = '\0';                                      // String must be null terminated
-
-    // Compare our payload with known command strings
-    if (strcmp(char_payload, "ON") == 0)
-    {
-        led = 1;
-    }
-    else if (strcmp(char_payload, "OFF") == 0)
-    {
-        led = 0;
-    }
-    else if (strcmp(char_payload, "RESET") == 0)
-    {
-        printf("RESETTING ...\n");
-        system_reset();
-    }
+void clignote(){
+    led =!led;
 }
 
 /*!
@@ -112,7 +88,7 @@ static void yield()
  *  \brief Publish data over the corresponding adafruit MQTT topic
  *
  */
-static int8_t pressure()
+static int8_t pression()
 {
     float pres = bme.pressure();
     char presPayload[20];
@@ -180,6 +156,87 @@ static int8_t temphum()
 
     return 0;
 }
+
+/*!
+ *  \brief Called when a message is received
+ *
+ *  Print messages received on mqtt topic
+ */
+void messageBTN(MQTT::MessageData &md)
+{
+    MQTT::Message &message = md.message;
+    printf("Message arrived: qos %d, retained %d, dup %d, packetid %d\r\n", message.qos, message.retained, message.dup, message.id);
+    printf("Payload %.*s\r\n", message.payloadlen, (char *)message.payload);
+
+    // Get the payload string
+    char *char_payload = (char *)malloc((message.payloadlen + 1) * sizeof(char)); // allocate the necessary size for our buffer
+    char_payload = (char *)message.payload;                                       // get the arrived payload in our buffer
+    char_payload[message.payloadlen] = '\0';                                      // String must be null terminated
+
+    // Compare our payload with known command strings
+    if (strcmp(char_payload, "1") == 0)
+    {
+        main_queue.call(pression);
+    }
+    else
+    {
+        printf("ISSUE... RESETING \n");
+        system_reset();
+    }
+}
+
+
+
+void messageECL(MQTT::MessageData &md)
+{
+    MQTT::Message &message = md.message;
+    printf("Message arrived: qos %d, retained %d, dup %d, packetid %d\r\n", message.qos, message.retained, message.dup, message.id);
+    printf("Payload %.*s\r\n", message.payloadlen, (char *)message.payload);
+
+    // Get the payload string
+    char *char_payload = (char *)malloc((message.payloadlen + 1) * sizeof(char)); // allocate the necessary size for our buffer
+    char_payload = (char *)message.payload;                                       // get the arrived payload in our buffer
+    char_payload[message.payloadlen] = '\0';                                      // String must be null terminated
+
+    // Compare our payload with known command strings
+    if (strcmp(char_payload, "ON") == 0)
+    {
+        led = 1;
+    }
+    else if (strcmp(char_payload, "OFF") == 0)
+    {
+        led = 0;
+        voyant.detach();
+
+    }
+    else if (strcmp(char_payload, "RESET") == 0)
+    {
+        printf("RESETTING ...\n");
+        system_reset();
+    }
+}
+
+
+
+void messageVIT(MQTT::MessageData &md)
+{
+    MQTT::Message &message = md.message;
+    printf("Message arrived: qos %d, retained %d, dup %d, packetid %d\r\n", message.qos, message.retained, message.dup, message.id);
+    printf("Payload %.*s\r\n", message.payloadlen, (char *)message.payload);
+
+    // Get the payload string
+    char *char_payload = (char *)malloc((message.payloadlen + 1) * sizeof(char)); // allocate the necessary size for our buffer
+    char_payload = (char *)message.payload;                                       // get the arrived payload in our buffer
+    char_payload[message.payloadlen] = '\0';                                      // String must be null terminated
+
+    // Compare our payload with known command strings
+    if (led)
+    {
+        voyant.attach(main_queue.event(clignote),atof(char_payload)*0.1);
+    }
+    
+}
+
 
 
 // main() runs in its own thread in the OS
@@ -250,19 +307,19 @@ int main()
     printf("Connected to Adafruit\n");
 
     /* MQTT Subscribe */
-    if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE_BTN, MQTT::QOS0, messageArrived)) != 0)
+    if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE_BTN, MQTT::QOS0, messageBTN)) != 0)
     {
         printf("rc from MQTT subscribe is %d\r\n", rc);
     }
     printf("Subscribed to Topic: %s\n", MQTT_TOPIC_SUBSCRIBE_BTN);
 
-    if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE_ECL, MQTT::QOS0, messageArrived)) != 0)
+    if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE_ECL, MQTT::QOS0, messageECL)) != 0)
     {
         printf("rc from MQTT subscribe is %d\r\n", rc);
     }
     printf("Subscribed to Topic: %s\n", MQTT_TOPIC_SUBSCRIBE_ECL);
 
-    if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE_VIT, MQTT::QOS0, messageArrived)) != 0)
+    if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE_VIT, MQTT::QOS0, messageVIT)) != 0)
     {
         printf("rc from MQTT subscribe is %d\r\n", rc);
     }
@@ -275,7 +332,7 @@ int main()
 
     // Publish
     
-    main_queue.call_every(SYNC_INTERVAL*5000,temphum);
-    button.fall(main_queue.event(pressure));
+    main_queue.call_every(SYNC_INTERVAL*10000,temphum);
+    button.fall(main_queue.event(pression));
     main_queue.dispatch_forever();
 }
