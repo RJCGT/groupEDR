@@ -184,18 +184,18 @@ int main()
         return rc;
     }
 
-
-
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = 4;
     data.keepAliveInterval = 25;
     data.clientID.cstring = "6TRON";
-    data.username.cstring = (char*) “RGJCT”; // Adafruit username
-    data.password.cstring = (char*) “aio_EXZX901ftQKQWWvvVVlsID9zs6WH”; // Adafruit user key
+    if (client->connect(data) != 0){
+        printf("Connection to MQTT Broker Failed\n");
+    }
+    
+    data.username.cstring = (char*) "RGJCT";
+    data.password.cstring = (char*) "aio_EXZX901ftQKQWWvvVVlsID9zs6WH";
 
     printf("Connected to Adafruit\n");
-
-
 
     /* MQTT Subscribe */
     if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE, MQTT::QOS0, messageArrived)) != 0){
