@@ -36,7 +36,7 @@ MQTTClient *client;
 
 // MQTT
 // const char* hostname = "fd9f:590a:b158::1";
-const char* hostname = "broker.hivemq.com";
+const char* hostname = "io.adafruit.com";
 int port = 1883;
 bool btn = false;
 // Error code
@@ -184,15 +184,18 @@ int main()
         return rc;
     }
 
+
+
     MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
     data.MQTTVersion = 4;
     data.keepAliveInterval = 25;
-    data.clientID.cstring = MQTT_CLIENT_ID;
-    if (client->connect(data) != 0){
-        printf("Connection to MQTT Broker Failed\n");
-    }
+    data.clientID.cstring = "6TRON";
+    data.username.cstring = (char*) “adafruit_username”; // Adafruit username
+    data.password.cstring = (char*) “adafruit_io_key”; // Adafruit user key
 
-    printf("Connected to MQTT broker\n");
+    printf("Connected to Adafruit\n");
+
+
 
     /* MQTT Subscribe */
     if ((rc = client->subscribe(MQTT_TOPIC_SUBSCRIBE, MQTT::QOS0, messageArrived)) != 0){
