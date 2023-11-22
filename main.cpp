@@ -19,9 +19,9 @@
 #include <MQTTClientMbedOs.h>
 
 namespace {
-#define GROUP_NUMBER            "group2"
-#define MQTT_TOPIC_PUBLISH      "/estia/"GROUP_NUMBER"/uplink"
-#define MQTT_TOPIC_SUBSCRIBE    "/estia/"GROUP_NUMBER"/downlink"
+#define GROUP_NUMBER            "groupEDR"
+#define MQTT_TOPIC_PUBLISH      "/estia/group42/downlink"
+#define MQTT_TOPIC_SUBSCRIBE    "/estia/group42/downlink"
 #define SYNC_INTERVAL           1
 #define MQTT_CLIENT_ID          "6LoWPAN_Node_"GROUP_NUMBER
 }
@@ -38,7 +38,7 @@ MQTTClient *client;
 // const char* hostname = "fd9f:590a:b158::1";
 const char* hostname = "broker.hivemq.com";
 int port = 1883;
-
+bool btn = false;
 // Error code
 nsapi_size_or_error_t rc = 0;
 
@@ -98,21 +98,39 @@ static void yield(){
  *
  */
 static int8_t publish() {
+    char *mqttPayload1 = "ON";
+    char *mqttPayload2 = "OFF";
+    if(btn){
+        MQTT::Message message;
+        message.qos = MQTT::QOS1;
+        message.retained = false;
+        message.dup = false;
+        message.payload = (void*)mqttPayload1;
+        message.payloadlen = strlen(mqttPayload1);
 
-    char *mqttPayload = "Hello from 6TRON";
+        printf("Send: %s to MQTT Broker: %s\n", mqttPayload1, hostname);
+        rc = client->publish(MQTT_TOPIC_PUBLISH, message);
+        if (rc != 0) {
+            printf("Failed to publish: %d\n", rc);
+            return rc;
+        }
+        btn =!btn;
+    }
+    else{
+        MQTT::Message message;
+        message.qos = MQTT::QOS1;
+        message.retained = false;
+        message.dup = false;
+        message.payload = (void*)mqttPayload2;
+        message.payloadlen = strlen(mqttPayload2);
 
-    MQTT::Message message;
-    message.qos = MQTT::QOS1;
-    message.retained = false;
-    message.dup = false;
-    message.payload = (void*)mqttPayload;
-    message.payloadlen = strlen(mqttPayload);
-
-    printf("Send: %s to MQTT Broker: %s\n", mqttPayload, hostname);
-    rc = client->publish(MQTT_TOPIC_PUBLISH, message);
-    if (rc != 0) {
-        printf("Failed to publish: %d\n", rc);
-        return rc;
+        printf("Send: %s to MQTT Broker: %s\n", mqttPayload2, hostname);
+        rc = client->publish(MQTT_TOPIC_PUBLISH, message);
+        if (rc != 0) {
+            printf("Failed to publish: %d\n", rc);
+            return rc;
+        }
+        btn =!btn;
     }
     return 0;
 }
